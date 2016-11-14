@@ -13,10 +13,34 @@ class GooglePlayApi:
         self.service = build('androidpublisher', 'v2', http=http)
 
     def start_edit(self):
-        self.edit = self.service.edits().insert(body={}, packageName=self.package_name).execute()
+        return Edit(self.service, self.package_name)
+
+    def entitlements(self):
+        return self.service.entitlements().list(packageName=self.package_name).execute()
+
+    def reviews(self, review_id):
+        if review_id is None:
+            return self.service.reviews().list(packageName=self.package_name).execute()
+        else:
+            return self.service.reviews().list(packageName=self.package_name, reviewId=review_id).execute()
+
+    def reviews_reply(self, review_id, reply):
+        result = self.service.reviews().reply(
+                packageName=self.package_name, reviewId=review_id, body={u'replyText': reply}
+        ).execute()
+
+        
+
+
+class Edit:
+
+    def __init__(self, service, package_name):
+        self.package_name = package_name
+        self.service = service
+        self.edit = service.edits().insert(body={}, packageName=self.package_name).execute()
         self.edit['created'] = time.time()
 
-    def commit_edit(self):
+    def commit(self):
         if self.edit is None:
             print 'Nothing to commit'
 
@@ -57,7 +81,8 @@ class GooglePlayApi:
                 packageName=self.package_name,
                 body={u'track': track,
                       u'userFraction': rollout_fraction,
-                      u'versionCodes': [version_code]}).execute()
+                      u'versionCodes': [version_code]}
+        ).execute()
 
         print 'Track %s is set for version code(s) %s' % (
             track_response['track'], str(track_response['versionCodes']))
@@ -68,8 +93,8 @@ class GooglePlayApi:
             raise IllegalState('call start_edit() before using this method')
 
         track_result = self.service.edits().tracks().get(
-                editId=self.edit['id'], packageName=self.package_name, track=track)\
-            .execute()
+                editId=self.edit['id'], packageName=self.package_name, track=track
+        ).execute()
 
         version_codes = track_result['versionCodes']
 

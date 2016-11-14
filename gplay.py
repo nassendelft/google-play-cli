@@ -67,14 +67,14 @@ if __name__ == '__main__':
 
     if args['track'] is True:
         if args['active'] is True:
-            api.start_edit()
-            print api.get_active_version_code('production')
+            edit = api.start_edit()
+            print edit.get_active_version_code('production')
 
     if args['rollout'] is True:
-        api.start_edit()
+        edit = api.start_edit()
         rollout_fraction = float(args['FRACTION'])
         version_code = args['--version-code'] if not 'latest' else None
         track = args['--track'] if not False else 'production'
-        api.increase_rollout(rollout_fraction, track, version_code)
-        commit_result = api.commit_edit()
+        edit.increase_rollout(rollout_fraction, track, version_code)
+        commit_result = edit.commit_edit()
         print '(%s) Successfully rolled out to %.2f' % (commit_result['id'], rollout_fraction)
