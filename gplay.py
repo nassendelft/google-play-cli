@@ -25,15 +25,29 @@ from oauth2client.client import flow_from_clientsecrets, OAuth2WebServerFlow, St
 from oauth2client.service_account import ServiceAccountCredentials
 from google_play_api import GooglePlayApi
 
-if __name__ == '__main__':
 
-    args = docopt(__doc__, version='1.0.0')
+def rollout(api, args):
+    version_code = args['--version-code'] if not 'latest' else None
+    track = args['--track'] if not False else 'production'
+    rollout_fraction = float(args['FRACTION'])
+    edit = api.start_edit()
+    edit.increase_rollout(rollout_fraction, track, version_code)
+    commit_result = edit.commit_edit()
+    print '(%s) Successfully rolled out to %.2f' % (commit_result['id'], rollout_fraction)
 
+
+def get_active_track(api):
+    edit = api.start_edit()
+    print edit.get_active_version_code('production')
+
+
+def get_credentials(args):
     credentials = None
     flow = None
 
     scope = 'https://www.googleapis.com/auth/androidpublisher'
     redirect_uri = 'urn:ietf:wg:oauth:2.0:oob'
+
     if args['--service-json'] is not None:
         credentials = ServiceAccountCredentials.from_json_keyfile_name(
                 args['--service-json'],
@@ -63,18 +77,19 @@ if __name__ == '__main__':
     if credentials is None:
         exit(ValueError('missing credentials'))
 
-    api = GooglePlayApi(credentials, args['PACKAGE_NAME'])
+    return credentials
 
-    if args['track'] is True:
-        if args['active'] is True:
-            edit = api.start_edit()
-            print edit.get_active_version_code('production')
+
+def do_action(args):
+    package_name = args['PACKAGE_NAME']
+    api = GooglePlayApi(get_credentials(args), package_name)
+
+    if args['track'] is True and args['active'] is True:
+        get_active_track(api)
 
     if args['rollout'] is True:
-        edit = api.start_edit()
-        rollout_fraction = float(args['FRACTION'])
-        version_code = args['--version-code'] if not 'latest' else None
-        track = args['--track'] if not False else 'production'
-        edit.increase_rollout(rollout_fraction, track, version_code)
-        commit_result = edit.commit_edit()
-        print '(%s) Successfully rolled out to %.2f' % (commit_result['id'], rollout_fraction)
+        rollout(api, args)
+
+
+if __name__ == '__main__':
+    do_action(docopt(__doc__, version='1.0.0'))

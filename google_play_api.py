@@ -25,11 +25,9 @@ class GooglePlayApi:
             return self.service.reviews().list(packageName=self.package_name, reviewId=review_id).execute()
 
     def reviews_reply(self, review_id, reply):
-        result = self.service.reviews().reply(
+        self.service.reviews().reply(
                 packageName=self.package_name, reviewId=review_id, body={u'replyText': reply}
         ).execute()
-
-        
 
 
 class Edit:
