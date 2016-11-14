@@ -26,11 +26,12 @@ class GooglePlayApi:
         Get credentials object needed for constructing GooglePlayAPi.
         There are a coupe of ways to get the credentials:
         - using a service
-          {'service-json': path-to-json.json}
+          {'service': {'json': path-to-json.json}}
           or
-          {'service-p12': path-to-p12.p12}
+          {'service': {'p12': path-to-p12.p12}}
         - using oauth
-          {'oauth-json': path-to-json.json}
+          {'oauth': {'json': path-to-client-secret-json.json}}
+          or
           {'oauth': {'client-id': your-client-id, 'client-secret': your-client-secret}
 
         :param options: the authentication options
@@ -43,17 +44,17 @@ class GooglePlayApi:
         scope = 'https://www.googleapis.com/auth/androidpublisher'
         redirect_uri = 'urn:ietf:wg:oauth:2.0:oob'
 
-        if options['service'] is not None:
+        if options['service'] is not None and options['service']['json'] is not None:
             credentials = ServiceAccountCredentials.from_json_keyfile_name(
-                    options['service-json'],
+                    options['service']['json'],
                     [scope])
-        if options['service-p12'] is not None:
+        if options['service'] is not None and options['service']['p12'] is not None:
             credentials = ServiceAccountCredentials.from_p12_keyfile(
-                    options['service-p12'],
+                    options['p12'],
                     [scope])
-        if options['oauth-json'] is not None:
+        if options['oauth'] is not None and options['oauth']['json'] is not None:
             flow = flow_from_clientsecrets(
-                    options['oauth-json'],
+                    options['oauth']['json'],
                     scope=scope,
                     redirect_uri=redirect_uri)
         if options['oauth'] is True:

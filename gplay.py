@@ -40,6 +40,7 @@ Options:
 
 """
 from docopt import docopt
+
 from google_play_api import GooglePlayApi
 
 
@@ -59,13 +60,12 @@ def get_active_track(api):
 
 
 def get_credentials(args):
-
     if args['--service-json'] is not None:
-        options = {'service-json': args['--service-json']}
+        options = {'service': {'json': args['--service-json']}}
     if args['--service-p12'] is not None:
-        options = {'service-p12': args['--service-p12']}
+        options = {'service': {'p12': args['--service-p12']}}
     if args['--oauth-json'] is not None:
-        options = {'oauth-json': args['--oauth-json']}
+        options = {'oauth': {'json': args['--oauth-json']}}
     if args['--oauth'] is True:
         options = {'oauth': {'client-id': args['--client-id'], 'client-secret': args['--client-secret']}}
 
