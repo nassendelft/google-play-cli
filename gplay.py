@@ -17,6 +17,13 @@ Usage:
     (--service-p12=FILE | --service-json=FILE | --oauth-json=FILE | (--oauth --client-id=ID --client-secret=SECRET))
     [--track=TRACK] [--faction=FRACTION] PACKAGE_NAME FILE
 
+Commands:
+  track active             get the active version code (defaults to 'production' track)
+  rollout                  increase the rollout percentage
+  reviews                  get list of reviews
+  entitlements             get in app entitlements
+  upload                   upload APK (defaults to 'production' track)
+
 Options:
   --service-p12=FILE       uses a p12 file for service account credentials
   --service-json=FILE      uses a json file for service account credentials
