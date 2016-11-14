@@ -1,9 +1,17 @@
+import os
+
 import httplib2
 import time
 from apiclient.discovery import build
+from oauth2client import tools
+from oauth2client.client import flow_from_clientsecrets, OAuth2WebServerFlow, Storage
+from oauth2client.service_account import ServiceAccountCredentials
 
 
 class GooglePlayApi:
+    """
+    This class is a simplified wrapper around the google api client lib.
+    """
 
     def __init__(self, credentials, package_name):
         http = httplib2.Http()
@@ -12,25 +20,104 @@ class GooglePlayApi:
         self.package_name = package_name
         self.service = build('androidpublisher', 'v2', http=http)
 
+    @staticmethod
+    def get_credentials(options, cache_location=None):
+        """
+        Get credentials object needed for constructing GooglePlayAPi.
+        There are a coupe of ways to get the credentials:
+        - using a service
+          {'service-json': path-to-json.json}
+          or
+          {'service-p12': path-to-p12.p12}
+        - using oauth
+          {'oauth-json': path-to-json.json}
+          {'oauth': {'client-id': your-client-id, 'client-secret': your-client-secret}
+
+        :param options: the authentication options
+        :param cache_location: (optional) if using oauth it'll store the credentials in a file
+        :return: the credentials object
+        """
+        credentials = None
+        flow = None
+
+        scope = 'https://www.googleapis.com/auth/androidpublisher'
+        redirect_uri = 'urn:ietf:wg:oauth:2.0:oob'
+
+        if options['service'] is not None:
+            credentials = ServiceAccountCredentials.from_json_keyfile_name(
+                    options['service-json'],
+                    [scope])
+        if options['service-p12'] is not None:
+            credentials = ServiceAccountCredentials.from_p12_keyfile(
+                    options['service-p12'],
+                    [scope])
+        if options['oauth-json'] is not None:
+            flow = flow_from_clientsecrets(
+                    options['oauth-json'],
+                    scope=scope,
+                    redirect_uri=redirect_uri)
+        if options['oauth'] is True:
+            flow = OAuth2WebServerFlow(
+                    client_id=options['oauth']['client-id'],
+                    client_secret=options['oauth']['client-secret'],
+                    scope=scope,
+                    redirect_uri=redirect_uri)
+
+        if flow is not None:
+            if cache_location is None:
+                cache_location = os.path.join(os.getenv("HOME"), ".gplay", "credentials.dat")
+
+            storage = Storage(cache_location)
+            credentials = storage.get()
+            if credentials is None or credentials.invalid:
+                credentials = tools.run_flow(flow, storage)
+
+        if credentials is None:
+            exit(ValueError('missing credentials'))
+
+        return credentials
+
     def start_edit(self):
+        """
+        Starts a batch operation. Calling this method more then once will invalidate the previous one.
+        :return: a new Edit object
+        """
         return Edit(self.service, self.package_name)
 
     def entitlements(self):
+        """
+        :return: A user's current entitlement to an inapp item or subscription.
+        """
         return self.service.entitlements().list(packageName=self.package_name).execute()
 
-    def reviews(self, review_id):
-        if review_id is None:
-            return self.service.reviews().list(packageName=self.package_name).execute()
-        else:
-            return self.service.reviews().list(packageName=self.package_name, reviewId=review_id).execute()
+    def reviews(self):
+        """
+        :return: list of reviews
+        """
+        return self.service.reviews().list(packageName=self.package_name).execute()['reviews']
+
+    def review(self, review_id):
+        """
+        :param review_id: the reviewId of an item given when getting reviews list
+        :return: the review
+        """
+        return self.service.reviews().get(packageName=self.package_name, reviewId=review_id).execute()
 
     def reviews_reply(self, review_id, reply):
+        """
+        Reply to a review
+        :param review_id: the reviewId of an item given when getting reviews list
+        :param reply: the content of the reply
+        """
         self.service.reviews().reply(
                 packageName=self.package_name, reviewId=review_id, body={u'replyText': reply}
         ).execute()
 
 
 class Edit:
+    """
+    Starts a batch operation. All methods (except for commit) are not persisted until commit() is called.
+    """
 
     def __init__(self, service, package_name):
         self.package_name = package_name
@@ -39,6 +126,11 @@ class Edit:
         self.edit['created'] = time.time()
 
     def commit(self):
+        """
+        Commits and persist all changes made.
+        No actions will be permanent until this method is called.
+        :return: the result object
+        """
         if self.edit is None:
             print 'Nothing to commit'
 
@@ -53,7 +145,7 @@ class Edit:
         Set the roll out fraction to given package name. If no version_codes is given it
         uses the highest version code only.
         :param track: either 'production', 'beta' or 'alpha'
-        :param rollout_fraction: in range of 0.1 to 1
+        :param rollout_fraction: in range of 0.05 to 1
         :param version_code: the version codes to update or None to use the latest version
         """
 
@@ -85,7 +177,12 @@ class Edit:
         print 'Track %s is set for version code(s) %s' % (
             track_response['track'], str(track_response['versionCodes']))
 
-    def get_active_version_code(self, track="production"):
+    def get_active_version_code(self, track='production'):
+        """
+        Get the active version code of the given track
+        :param track: either 'production', 'beta' or 'alpha' (defaults to 'production')
+        :return: the version code
+        """
 
         if self.edit is None:
             raise IllegalState('call start_edit() before using this method')
@@ -101,6 +198,50 @@ class Edit:
 
         return version_codes[-1]
 
+    def upload(self, apk_file, track='production', rollout_fraction=None):
+        """
+        Upload an apk file.
+        :param apk_file: the path to the url file (can be max 1GB)
+        :param track: either 'production', 'beta' or 'alpha' (defaults to 'production')
+        :param rollout_fraction: in range of 0.05 to 1 (optional, but mandatory for 'rollout')
+        :return:
+        """
+
+        if rollout_fraction is not None and track is not 'rollout':
+            raise IllegalArgument('Fraction as been specified but track is not rollout')
+        if rollout_fraction is None and track is 'rollout':
+            raise IllegalArgument('Track "rollout" needs a rollout_fraction')
+
+        upload_result = self.service.edits().apk().uplad(
+                editId=self.edit['id'],
+                packageName=self.package_name,
+                media_body=apk_file
+        ).execute()
+
+        version_code = upload_result['versionCode']
+
+        print 'Version code %d has been uploaded' % version_code
+
+        body = {u'versionCodes': [version_code]}
+
+        if track is 'rollout':
+            body[u'userFraction'] = rollout_fraction
+            body[u'track'] = track
+
+        track_response = self.service.edits().tracks().update(
+                editId=self.edit['id'],
+                track=track,
+                packageName=self.package_name,
+                body=body
+        ).execute()
+
+        print 'Track %s is set for version code(s) %s' % (
+            track_response['track'], str(track_response['versionCodes']))
+
 
 class IllegalState(Exception):
+    pass
+
+
+class IllegalArgument(Exception):
     pass

@@ -7,6 +7,15 @@ Usage:
   gplay.py rollout
     (--service-p12=FILE | --service-json=FILE | --oauth-json=FILE | (--oauth --client-id=ID --client-secret=SECRET))
     [--track=TRACK] [--version-code=CODE] PACKAGE_NAME FRACTION
+  gplay.py reviews
+    (--service-p12=FILE | --service-json=FILE | --oauth-json=FILE | (--oauth --client-id=ID --client-secret=SECRET))
+    [--review-id=ID] PACKAGE_NAME
+  gplay.py entitlements
+    (--service-p12=FILE | --service-json=FILE | --oauth-json=FILE | (--oauth --client-id=ID --client-secret=SECRET))
+    PACKAGE_NAME
+  gplay.py upload
+    (--service-p12=FILE | --service-json=FILE | --oauth-json=FILE | (--oauth --client-id=ID --client-secret=SECRET))
+    [--track=TRACK] [--faction=FRACTION] PACKAGE_NAME FILE
 
 Options:
   --service-p12=FILE       uses a p12 file for service account credentials
@@ -17,12 +26,13 @@ Options:
   --client-secret=SECRET
 
   --track=TRACK            select track (production, beta or alpha)  [default: production]
-  --version-code=CODE           app version code to select [default: latest]
+  --version-code=CODE      app version code to select [default: latest]
+  --fraction=FRACTION      the percentage of users that receives this update (0.2 .. 1)
+
+  --review-id=ID           get a single review
+
 """
 from docopt import docopt
-from oauth2client import tools
-from oauth2client.client import flow_from_clientsecrets, OAuth2WebServerFlow, Storage
-from oauth2client.service_account import ServiceAccountCredentials
 from google_play_api import GooglePlayApi
 
 
@@ -42,42 +52,59 @@ def get_active_track(api):
 
 
 def get_credentials(args):
-    credentials = None
-    flow = None
-
-    scope = 'https://www.googleapis.com/auth/androidpublisher'
-    redirect_uri = 'urn:ietf:wg:oauth:2.0:oob'
 
     if args['--service-json'] is not None:
-        credentials = ServiceAccountCredentials.from_json_keyfile_name(
-                args['--service-json'],
-                [scope])
+        options = {'service-json': args['--service-json']}
     if args['--service-p12'] is not None:
-        credentials = ServiceAccountCredentials.from_p12_keyfile(
-                args['--service-p12'],
-                [scope])
+        options = {'service-p12': args['--service-p12']}
     if args['--oauth-json'] is not None:
-        flow = flow_from_clientsecrets(
-                args['--oauth-json'],
-                scope=scope,
-                redirect_uri=redirect_uri)
+        options = {'oauth-json': args['--oauth-json']}
     if args['--oauth'] is True:
-        flow = OAuth2WebServerFlow(
-                client_id=args['--client-id'],
-                client_secret=args['--client-secret'],
-                scope=scope,
-                redirect_uri=redirect_uri)
+        options = {'oauth': {'client-id': args['--client-id'], 'client-secret': args['--client-secret']}}
 
-    if flow is not None:
-        storage = Storage('credentials.dat')
-        credentials = storage.get()
-        if credentials is None or credentials.invalid:
-            credentials = tools.run_flow(flow, storage)
+    return GooglePlayApi.get_credentials(options)
 
-    if credentials is None:
-        exit(ValueError('missing credentials'))
 
-    return credentials
+def get_reviews(api, args):
+    if args['--review-id'] is None:
+        reviews = api.reviews()
+        for review in reviews:
+            print_review(review)
+        print ''
+    else:
+        review = api.review(args['--review-id'])
+        print_review(review)
+
+
+def upload_apk(api, args):
+    apk_file = args['FILE']
+    rollout_fraction = args['--fraction'] if not False else None
+    track = args['--track'] if not False else 'production'
+
+    edit = api.start_edit()
+    edit.upload(apk_file, track, rollout_fraction)
+    commit_result = edit.commit_edit()
+    print '(%s) Successfully uploaded apkf' % commit_result['id']
+
+
+def print_review(review):
+    print 'name:  %s' % review['authorName']
+    print 'id:    %s' % review['reviewId']
+    for comment in review['comments']:
+        if 'userComment' in comment:
+            user_comment = comment['userComment']
+            print '- User'
+            print '       (version: %s/%s, android: %s, language: %s, device: %s, starRating: %s)' % (
+                user_comment['appVersionCode'],
+                user_comment['appVersionName'],
+                user_comment['androidOsVersion'],
+                user_comment['reviewerLanguage'],
+                user_comment['device'],
+                user_comment['starRating'])
+            print '       %s' % user_comment['text']
+        elif 'developerComment' in comment:
+            print '- Dev'
+            print '       %s' % comment['developerComment']['text']
 
 
 def do_action(args):
@@ -86,9 +113,23 @@ def do_action(args):
 
     if args['track'] is True and args['active'] is True:
         get_active_track(api)
+        return
 
     if args['rollout'] is True:
         rollout(api, args)
+        return
+
+    if args['reviews'] is True:
+        get_reviews(api, args)
+        return
+
+    if args['entitlements'] is True:
+        print api.entitlements()
+        return
+
+    if args['upload'] is True:
+        upload_apk(api, args)
+        return
 
 
 if __name__ == '__main__':
