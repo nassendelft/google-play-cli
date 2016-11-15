@@ -44,20 +44,20 @@ class GooglePlayApi:
         scope = 'https://www.googleapis.com/auth/androidpublisher'
         redirect_uri = 'urn:ietf:wg:oauth:2.0:oob'
 
-        if options['service'] is not None and options['service']['json'] is not None:
+        if 'service' in options and 'json' in options['service']:
             credentials = ServiceAccountCredentials.from_json_keyfile_name(
                     options['service']['json'],
                     [scope])
-        if options['service'] is not None and options['service']['p12'] is not None:
+        if 'service' in options and 'p12' in options['service']:
             credentials = ServiceAccountCredentials.from_p12_keyfile(
                     options['p12'],
                     [scope])
-        if options['oauth'] is not None and options['oauth']['json'] is not None:
+        if 'oauth' in options and 'json' in options['oauth']:
             flow = flow_from_clientsecrets(
                     options['oauth']['json'],
                     scope=scope,
                     redirect_uri=redirect_uri)
-        if options['oauth'] is True:
+        if 'oauth' in options is True and 'client-id' in options['oauth'] and 'client-secret' in options['oauth']:
             flow = OAuth2WebServerFlow(
                     client_id=options['oauth']['client-id'],
                     client_secret=options['oauth']['client-secret'],
