@@ -10,19 +10,19 @@ pip install gplay
 ```
 Interact with Google Play services
 Usage:
-  gplay.py track active
+  gplay track active
     (--service-p12=FILE | --service-json=FILE | --oauth-json=FILE | (--oauth --client-id=ID --client-secret=SECRET))
     [--track=TRACK] PACKAGE_NAME
-  gplay.py rollout
+  gplay rollout
     (--service-p12=FILE | --service-json=FILE | --oauth-json=FILE | (--oauth --client-id=ID --client-secret=SECRET))
     [--track=TRACK] [--version-code=CODE] PACKAGE_NAME FRACTION
-  gplay.py reviews
+  gplay reviews
     (--service-p12=FILE | --service-json=FILE | --oauth-json=FILE | (--oauth --client-id=ID --client-secret=SECRET))
     [--review-id=ID] PACKAGE_NAME
-  gplay.py entitlements
+  gplay entitlements
     (--service-p12=FILE | --service-json=FILE | --oauth-json=FILE | (--oauth --client-id=ID --client-secret=SECRET))
     PACKAGE_NAME
-  gplay.py upload
+  gplay upload
     (--service-p12=FILE | --service-json=FILE | --oauth-json=FILE | (--oauth --client-id=ID --client-secret=SECRET))
     [--track=TRACK] [--faction=FRACTION] PACKAGE_NAME FILE
 
