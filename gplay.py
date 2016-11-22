@@ -6,7 +6,7 @@ Usage:
     [--track=TRACK] PACKAGE_NAME
   gplay rollout
     (--service-p12=FILE | --service-json=FILE | --oauth-json=FILE | (--oauth --client-id=ID --client-secret=SECRET))
-    [--track=TRACK] [--version-code=CODE] PACKAGE_NAME FRACTION
+    [--version-code=CODE] PACKAGE_NAME FRACTION
   gplay reviews
     (--service-p12=FILE | --service-json=FILE | --oauth-json=FILE | (--oauth --client-id=ID --client-secret=SECRET))
     [--review-id=ID] PACKAGE_NAME
@@ -46,17 +46,16 @@ from google_play_api import GooglePlayApi
 
 def rollout(api, args):
     version_code = args['--version-code'] if not 'latest' else None
-    track = args['--track'] if not False else 'production'
     rollout_fraction = float(args['FRACTION'])
     edit = api.start_edit()
-    edit.increase_rollout(rollout_fraction, track, version_code)
-    commit_result = edit.commit_edit()
+    edit.increase_rollout(rollout_fraction, version_code)
+    commit_result = edit.commit()
     print '(%s) Successfully rolled out to %.2f' % (commit_result['id'], rollout_fraction)
 
 
-def get_active_track(api):
+def get_active_track(api, args):
     edit = api.start_edit()
-    print edit.get_active_version_code('production')
+    print edit.get_active_version_code(args['--track'])
 
 
 def get_credentials(args):
@@ -120,7 +119,7 @@ def do_action():
     api = GooglePlayApi(get_credentials(args), package_name)
 
     if args['track'] is True and args['active'] is True:
-        get_active_track(api)
+        get_active_track(api, args)
         return
 
     if args['rollout'] is True:

@@ -141,7 +141,7 @@ class Edit:
 
         return result
 
-    def increase_rollout(self, rollout_fraction, track='production', version_code=None):
+    def increase_rollout(self, rollout_fraction, version_code=None):
         """
         Set the roll out fraction to given package name. If no version_codes is given it
         uses the highest version code only.
@@ -157,20 +157,20 @@ class Edit:
 
         if version_code is None:
 
-            track_version_code = self.get_active_version_code(track)
+            track_version_code = self.get_active_version_code('rollout')
 
             if track_version_code is None:
                 raise ValueError('There are is no version available')
 
             version_code = track_version_code
-
+        g
         print 'Changing version %d to %.2f' % (version_code, rollout_fraction)
 
         track_response = self.service.edits().tracks().update(
                 editId=edit_id,
-                track=track,
+                track='rollout',
                 packageName=self.package_name,
-                body={u'track': track,
+                body={u'track': 'rollout',
                       u'userFraction': rollout_fraction,
                       u'versionCodes': [version_code]}
         ).execute()
