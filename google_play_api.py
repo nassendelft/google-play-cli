@@ -163,7 +163,7 @@ class Edit:
                 raise ValueError('There are is no version available')
 
             version_code = track_version_code
-        g
+
         print 'Changing version %d to %.2f' % (version_code, rollout_fraction)
 
         track_response = self.service.edits().tracks().update(
