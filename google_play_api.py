@@ -150,9 +150,6 @@ class Edit:
         :param version_code: the version codes to update or None to use the latest version
         """
 
-        if self.edit is None:
-            raise IllegalState('call start_edit() before using this method')
-
         edit_id = self.edit['id']
 
         if version_code is None:
@@ -184,9 +181,6 @@ class Edit:
         :param track: either 'production', 'beta' or 'alpha' (defaults to 'production')
         :return: the version code
         """
-
-        if self.edit is None:
-            raise IllegalState('call start_edit() before using this method')
 
         track_result = self.service.edits().tracks().get(
                 editId=self.edit['id'], packageName=self.package_name, track=track
@@ -238,10 +232,6 @@ class Edit:
 
         print 'Track %s is set for version code(s) %s' % (
             track_response['track'], str(track_response['versionCodes']))
-
-
-class IllegalState(Exception):
-    pass
 
 
 class IllegalArgument(Exception):
