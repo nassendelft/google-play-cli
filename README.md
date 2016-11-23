@@ -13,9 +13,12 @@ Usage:
   gplay track active
     (--service-p12=FILE | --service-json=FILE | --oauth-json=FILE | (--oauth --client-id=ID --client-secret=SECRET))
     [--track=TRACK] PACKAGE_NAME
+  gplay track versions
+    (--service-p12=FILE | --service-json=FILE | --oauth-json=FILE | (--oauth --client-id=ID --client-secret=SECRET))
+    [--track=TRACK] PACKAGE_NAME
   gplay rollout
     (--service-p12=FILE | --service-json=FILE | --oauth-json=FILE | (--oauth --client-id=ID --client-secret=SECRET))
-    [--track=TRACK] [--version-code=CODE] PACKAGE_NAME FRACTION
+    [--version-code=CODE] PACKAGE_NAME FRACTION
   gplay reviews
     (--service-p12=FILE | --service-json=FILE | --oauth-json=FILE | (--oauth --client-id=ID --client-secret=SECRET))
     [--review-id=ID] PACKAGE_NAME
@@ -28,6 +31,7 @@ Usage:
 
 Commands:
   track active             get the active version code (defaults to 'production' track)
+  track versions           get a tracks list with version codes
   rollout                  increase the rollout percentage
   reviews                  get list of reviews
   entitlements             get in app entitlements
@@ -46,5 +50,4 @@ Options:
   --fraction=FRACTION      the percentage of users that receives this update (0.2 .. 1)
 
   --review-id=ID           get a single review
-
 ```

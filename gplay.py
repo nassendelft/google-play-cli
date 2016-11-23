@@ -1,5 +1,6 @@
 #!/usr/bin/python
-"""Interact with Google Play services
+"""
+Interact with Google Play services
 Usage:
   gplay track active
     (--service-p12=FILE | --service-json=FILE | --oauth-json=FILE | (--oauth --client-id=ID --client-secret=SECRET))
@@ -41,7 +42,6 @@ Options:
   --fraction=FRACTION      the percentage of users that receives this update (0.2 .. 1)
 
   --review-id=ID           get a single review
-
 """
 from docopt import docopt
 
