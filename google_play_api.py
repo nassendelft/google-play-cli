@@ -160,6 +160,16 @@ class Edit:
 
         return track_response
 
+    def get_versions(self):
+        edit_id = self.edit['id']
+
+        track_response = self.service.edits().tracks().list(
+                editId=edit_id,
+                packageName=self.package_name,
+        ).execute()
+
+        return track_response['tracks']
+
     def increase_rollout(self, rollout_fraction, version_code=None):
         """
         Set the roll out fraction to given package name. If no version_codes is given it
@@ -225,7 +235,7 @@ class Edit:
         if rollout_fraction is None and track is 'rollout':
             raise IllegalArgument('Track "rollout" needs a rollout_fraction')
 
-        upload_result = self.service.edits().apk().uplad(
+        upload_result = self.service.edits().apk().uplaod(
                 editId=self.edit['id'],
                 packageName=self.package_name,
                 media_body=apk_file

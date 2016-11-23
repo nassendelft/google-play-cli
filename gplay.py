@@ -4,6 +4,9 @@ Usage:
   gplay track active
     (--service-p12=FILE | --service-json=FILE | --oauth-json=FILE | (--oauth --client-id=ID --client-secret=SECRET))
     [--track=TRACK] PACKAGE_NAME
+  gplay track versions
+    (--service-p12=FILE | --service-json=FILE | --oauth-json=FILE | (--oauth --client-id=ID --client-secret=SECRET))
+    [--track=TRACK] PACKAGE_NAME
   gplay rollout
     (--service-p12=FILE | --service-json=FILE | --oauth-json=FILE | (--oauth --client-id=ID --client-secret=SECRET))
     [--version-code=CODE] PACKAGE_NAME FRACTION
@@ -19,6 +22,7 @@ Usage:
 
 Commands:
   track active             get the active version code (defaults to 'production' track)
+  track versions           get a tracks list with version codes
   rollout                  increase the rollout percentage
   reviews                  get list of reviews
   entitlements             get in app entitlements
@@ -58,6 +62,14 @@ def get_active_track(api, args):
     print edit.get_active_version_code(args['--track'])
 
 
+def get_list_track(api):
+    edit = api.start_edit()
+    for track in edit.get_versions():
+        track_name = track['track']
+        name = '%s (%s%%)' % (track_name, int(track['userFraction'] * 100)) if 'userFraction' in track else track_name
+        print '%s %s' % (name, ' '.join(map(str, track['versionCodes'])))
+
+
 def get_credentials(args):
     if args['--service-json'] is not None:
         options = {'service': {'json': args['--service-json']}}
@@ -90,7 +102,7 @@ def upload_apk(api, args):
     edit = api.start_edit()
     edit.upload(apk_file, track, rollout_fraction)
     commit_result = edit.commit_edit()
-    print '(%s) Successfully uploaded apkf' % commit_result['id']
+    print '(%s) Successfully uploaded apk' % commit_result['id']
 
 
 def print_review(review):
@@ -120,6 +132,10 @@ def do_action():
 
     if args['track'] is True and args['active'] is True:
         get_active_track(api, args)
+        return
+
+    if args['track'] is True and args['versions'] is True:
+        get_list_track(api)
         return
 
     if args['rollout'] is True:
