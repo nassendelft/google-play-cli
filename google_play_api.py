@@ -141,24 +141,22 @@ class Edit:
 
         return result
 
-    def move_track(self, track_from, track_to):
+    def move_track(self, version_code, track):
         """
         Moves version from one track to another.
         Tracks can only move up: alpha -> beta -> production
-        :param track_from: the track move to move from
-        :param track_to: the track to move to
+        :param version_code: the version code to update
+        :param track: the track to move to
         :return: the response of this action
         """
         edit_id = self.edit['id']
 
-        track_response = self.service.edits().tracks().patch(
+        return self.service.edits().tracks().update(
                 editId=edit_id,
-                track=track_from,
+                track=track,
                 packageName=self.package_name,
-                body={u'track': track_to}
+                body={u'versionCodes': [version_code]}
         ).execute()
-
-        return track_response
 
     def get_versions(self):
         edit_id = self.edit['id']
@@ -191,17 +189,21 @@ class Edit:
 
         print 'Changing version %d to %.2f' % (version_code, rollout_fraction)
 
-        track_response = self.service.edits().tracks().update(
-                editId=edit_id,
-                track='rollout',
-                packageName=self.package_name,
-                body={u'track': 'rollout',
-                      u'userFraction': rollout_fraction,
-                      u'versionCodes': [version_code]}
-        ).execute()
+        if rollout_fraction == 1.0:
+            self.move_track(version_code, 'production')
+            self.move_track(None, 'rollout')
+        else:
+            track_response = self.service.edits().tracks().update(
+                    editId=edit_id,
+                    track='rollout',
+                    packageName=self.package_name,
+                    body={u'track': 'rollout',
+                          u'userFraction': rollout_fraction,
+                          u'versionCodes': [version_code]}
+            ).execute()
 
-        print 'Track %s is set for version code(s) %s' % (
-            track_response['track'], str(track_response['versionCodes']))
+            print 'Track %s is set for version code(s) %s' % (
+                track_response['track'], str(track_response['versionCodes']))
 
     def get_active_version_code(self, track='production'):
         """
