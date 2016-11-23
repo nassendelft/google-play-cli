@@ -141,13 +141,31 @@ class Edit:
 
         return result
 
+    def move_track(self, track_from, track_to):
+        """
+        Moves version from one track to another.
+        Tracks can only move up: alpha -> beta -> production
+        :param track_from: the track move to move from
+        :param track_to: the track to move to
+        :return: the response of this action
+        """
+        edit_id = self.edit['id']
+
+        track_response = self.service.edits().tracks().patch(
+                editId=edit_id,
+                track=track_from,
+                packageName=self.package_name,
+                body={u'track': track_to}
+        ).execute()
+
+        return track_response
+
     def increase_rollout(self, rollout_fraction, version_code=None):
         """
         Set the roll out fraction to given package name. If no version_codes is given it
         uses the highest version code only.
-        :param track: either 'production', 'beta' or 'alpha'
         :param rollout_fraction: in range of 0.05 to 1
-        :param version_code: the version codes to update or None to use the latest version
+        :param version_code: the version code to update or None to use the latest version
         """
 
         edit_id = self.edit['id']
