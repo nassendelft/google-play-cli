@@ -127,7 +127,7 @@ def print_review(review):
 
 
 def do_action():
-    args = docopt(__doc__, version='1.0.4')
+    args = docopt(__doc__, version='1.0.5')
     package_name = args['PACKAGE_NAME']
     api = GooglePlayApi(get_credentials(args), package_name)
 
