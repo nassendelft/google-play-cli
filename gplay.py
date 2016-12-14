@@ -113,16 +113,17 @@ def print_review(review):
             user_comment = comment['userComment']
             print '- User'
             print '       (version: %s/%s, android: %s, language: %s, device: %s, starRating: %s)' % (
-                user_comment['appVersionCode'],
-                user_comment['appVersionName'],
-                user_comment['androidOsVersion'],
-                user_comment['reviewerLanguage'],
-                user_comment['device'],
-                user_comment['starRating'])
+                user_comment['appVersionCode'] if 'appVersionCode' in user_comment else 'unknown',
+                user_comment['appVersionName'] if 'appVersionName' in user_comment else 'unknown',
+                user_comment['androidOsVersion'] if 'androidOsVersion' in user_comment else 'unknown',
+                user_comment['reviewerLanguage'] if 'reviewerLanguage' in user_comment else 'unknown',
+                user_comment['device'] if 'device' in user_comment else 'unknown',
+                user_comment['starRating']) if 'starRating' in user_comment else 'unknown'
             print '       %s' % user_comment['text']
         elif 'developerComment' in comment:
             print '- Dev'
             print '       %s' % comment['developerComment']['text']
+        print ''
 
 
 def do_action():
