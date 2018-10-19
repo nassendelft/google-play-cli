@@ -19,7 +19,7 @@ Usage:
     PACKAGE_NAME
   gplay upload
     (--service-p12=FILE | --service-json=FILE | --oauth-json=FILE | (--oauth --client-id=ID --client-secret=SECRET))
-    [--track=TRACK] [--faction=FRACTION] PACKAGE_NAME FILE
+    [--track=TRACK] [--fraction=FRACTION] PACKAGE_NAME FILE
 
 Commands:
   track active             get the active version code (defaults to 'production' track)
