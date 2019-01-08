@@ -9,7 +9,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
         name='gplay',
-        version='1.0.5',
+        version='1.0.6',
         description='A Google Play Api Command Line Interface (CLI)',
         long_description=long_description,
         url='https://github.com/nassendelft/google-play-cli',
